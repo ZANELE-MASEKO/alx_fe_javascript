@@ -33,16 +33,6 @@ function loadQuotes() {
   if (data) quotes = JSON.parse(data);
 }
 
-function showQuoteByIndex(index) {
-  quoteDisplay.innerHTML = "";
-  if (!quotes.length) {
-    quoteDisplay.textContent = "No quotes available. Add one below!";
-    return;
-  }
-  const q = quotes[index];
-  quoteDisplay.innerHTML = `"${q.text}" — ${q.category}`;
-}
-
 function showRandomQuote() {
   const filtered = getFilteredQuotes();
   if (!filtered.length) {
@@ -125,13 +115,8 @@ function populateCategories() {
 function filterQuotes() {
   const selectedCategory = categoryFilter.value;
   localStorage.setItem(LAST_CATEGORY_KEY, selectedCategory);
-  let filtered;
-  if (selectedCategory === "all") {
-    filtered = quotes;
-  } else {
-    filtered = quotes.filter(q => q.category === selectedCategory);
-  }
-  if (filtered.length === 0) {
+  const filtered = selectedCategory === "all" ? quotes : quotes.filter(q => q.category === selectedCategory);
+  if (!filtered.length) {
     quoteDisplay.textContent = "No quotes found in this category.";
     return;
   }
@@ -142,8 +127,7 @@ function filterQuotes() {
 
 function getFilteredQuotes() {
   const selectedCategory = categoryFilter.value;
-  if (selectedCategory === "all") return quotes;
-  return quotes.filter(q => q.category === selectedCategory);
+  return selectedCategory === "all" ? quotes : quotes.filter(q => q.category === selectedCategory);
 }
 
 async function fetchQuotesFromServer() {
