@@ -173,7 +173,7 @@ async function syncQuotes() {
     saveQuotes();
     populateCategories();
     filterQuotes();
-    syncMessage.textContent = `${updated} quote(s) synced from server`;
+    syncMessage.textContent = "Quotes synced with server!";
     setTimeout(() => (syncMessage.textContent = ""), 5000);
   }
 }
