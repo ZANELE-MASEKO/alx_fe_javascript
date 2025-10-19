@@ -149,7 +149,7 @@ async function postQuoteToServer(quote) {
     await fetch(SERVER_URL, {
       method: "POST",
       body: JSON.stringify({ title: quote.text, body: quote.category }),
-      headers: { "Content-type": "application/json; charset=UTF-8" }
+      headers: { "Content-Type": "application/json; charset=UTF-8" }
     });
   } catch (err) {
     console.error("Failed to post quote to server:", err);
