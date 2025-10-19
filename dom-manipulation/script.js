@@ -1,5 +1,7 @@
 const LOCAL_STORAGE_KEY = "dynamicQuoteGenerator.quotes";
 const LAST_CATEGORY_KEY = "dynamicQuoteGenerator.lastCategory";
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
+const SYNC_INTERVAL = 30000;
 
 let quotes = [
   { text: "The best way to predict the future is to create it.", category: "Motivation" },
@@ -12,6 +14,15 @@ const newQuoteBtn = document.getElementById("newQuote");
 const exportBtn = document.getElementById("exportQuotes");
 const importInput = document.getElementById("importFile");
 const categoryFilter = document.getElementById("categoryFilter");
+
+let syncMessage = document.getElementById("syncMessage");
+if (!syncMessage) {
+  syncMessage = document.createElement("div");
+  syncMessage.id = "syncMessage";
+  syncMessage.style.color = "green";
+  syncMessage.style.marginTop = "10px";
+  document.body.appendChild(syncMessage);
+}
 
 function saveQuotes() {
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(quotes));
@@ -58,19 +69,15 @@ function addQuote() {
 
 function createAddQuoteForm() {
   const container = document.createElement("div");
-
   const textInput = document.createElement("input");
   textInput.id = "newQuoteText";
   textInput.placeholder = "Enter a new quote";
-
   const catInput = document.createElement("input");
   catInput.id = "newQuoteCategory";
   catInput.placeholder = "Enter quote category";
-
   const addBtn = document.createElement("button");
   addBtn.textContent = "Add Quote";
   addBtn.onclick = addQuote;
-
   container.appendChild(textInput);
   container.appendChild(catInput);
   container.appendChild(addBtn);
@@ -139,6 +146,59 @@ function getFilteredQuotes() {
   return quotes.filter(q => q.category === selectedCategory);
 }
 
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const data = await response.json();
+    return data.map(post => ({
+      text: post.title,
+      category: post.body || "Uncategorized"
+    }));
+  } catch (err) {
+    console.error("Failed to fetch server quotes:", err);
+    return [];
+  }
+}
+
+async function postQuoteToServer(quote) {
+  try {
+    await fetch(SERVER_URL, {
+      method: "POST",
+      body: JSON.stringify({ title: quote.text, body: quote.category }),
+      headers: { "Content-type": "application/json; charset=UTF-8" }
+    });
+  } catch (err) {
+    console.error("Failed to post quote to server:", err);
+  }
+}
+
+async function syncQuotes() {
+  const serverQuotes = await fetchQuotesFromServer();
+  let updated = 0;
+  serverQuotes.forEach(sq => {
+    const localIndex = quotes.findIndex(lq => lq.text === sq.text);
+    if (localIndex === -1) {
+      quotes.push(sq);
+      updated++;
+    } else {
+      quotes[localIndex] = sq;
+      updated++;
+    }
+  });
+  if (updated > 0) {
+    saveQuotes();
+    populateCategories();
+    filterQuotes();
+    syncMessage.textContent = `${updated} quote(s) synced from server`;
+    setTimeout(() => (syncMessage.textContent = ""), 5000);
+  }
+}
+
+function startAutoSync() {
+  syncQuotes();
+  setInterval(syncQuotes, SYNC_INTERVAL);
+}
+
 function init() {
   loadQuotes();
   createAddQuoteForm();
@@ -153,6 +213,7 @@ function init() {
   } else {
     showRandomQuote();
   }
+  startAutoSync();
 }
 
 init();
